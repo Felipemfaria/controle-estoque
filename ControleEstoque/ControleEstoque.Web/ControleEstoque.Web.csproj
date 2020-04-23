@@ -121,6 +121,7 @@
     <Compile Include="App_Start\FilterConfig.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="Controllers\CadastroController.cs" />
+    <Compile Include="Controllers\GraficoController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\OperacaoController.cs" />
     <Compile Include="Controllers\RelatorioController.cs" />
@@ -169,6 +170,7 @@
     <Folder Include="App_Data\" />
     <Folder Include="Models\" />
     <Folder Include="Views\Cadastro\" />
+    <Folder Include="Views\Grafico\" />
     <Folder Include="Views\Operacao\" />
     <Folder Include="Views\Relatorio\" />
   </ItemGroup>
