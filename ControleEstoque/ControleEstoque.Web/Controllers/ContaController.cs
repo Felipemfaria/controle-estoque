@@ -46,5 +46,13 @@ namespace ControleEstoque.Web.Controllers
 
             return View(login);
         }
+
+        [HttpPost]
+        [AllowAnonymous]
+        public ActionResult LogOff()
+        {
+            FormsAuthentication.SignOut();
+            return RedirectToAction("Index", "Home");
+        }
     }
 }
