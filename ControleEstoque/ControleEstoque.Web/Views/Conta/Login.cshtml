@@ -13,16 +13,20 @@
                 FormMethod.Post,
                 new { @class = "form-horizontal", role = "form" }))
             {
+                @Html.ValidationSummary(true, "", new { @class = "text-danter"})
                 <div class="form-group">
                     @Html.LabelFor(m => m.Usuario, new { @class = "form-label col-md-2" })
                     <div class="col-md-10">
                         @Html.TextBoxFor(m => m.Usuario, new { @class = "form-control" })
+                        @Html.ValidationMessageFor(m => m.Usuario, "", new { @class = "text-danger"})
                     </div>
                 </div>
                 <div class="form-group">
                     @Html.LabelFor(m => m.Senha, new { @class = "form-label col-md-2" })
                     <div class="col-md-10">
                         @Html.PasswordFor(m => m.Senha, new { @class = "form-control" })
+                        @Html.ValidationMessageFor(m => m.Senha, "", new { @class = "text-danger" })
+
                     </div>
                 </div>
                 <div class="form-group">
@@ -40,3 +44,7 @@
         </section>
     </div>
 </div>
+
+@section Scripts{
+    @Scripts.Render("~/bundles/jqueryval")    
+}
