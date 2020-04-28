@@ -23,14 +23,74 @@ namespace ControleEstoque.Web.Controllers
         }
 
         [HttpPost]
+        [Authorize]
         public ActionResult RecuperarGrupoProduto(int? id)
         {
             if (id != null)
             {
                 return Json(_ListaGrupoProduto.Find(x => x.id == id));
             }
+            else
+            {
+                return Json("erro: 'ID inválido'");
+            }
+        }
 
-            return Json("erro: 'ID inválido'");
+        [HttpPost]
+        [Authorize]
+        public ActionResult SalvarGrupoProduto(GrupoProdutoModel grupoProdutoModel)
+        {
+            if (grupoProdutoModel != null)
+            {
+                try
+                {
+                    var grupoProduto = _ListaGrupoProduto.Find(x => x.id == grupoProdutoModel.id);
+
+                    if (grupoProduto == null)
+                    {
+                        grupoProduto = grupoProdutoModel;
+                        grupoProduto.id = _ListaGrupoProduto.Max(x => x.id) + 1;
+                        _ListaGrupoProduto.Add(grupoProduto);
+                    }
+                    else
+                    {
+                        grupoProduto.Nome = grupoProdutoModel.Nome;
+                        grupoProduto.Ativo = grupoProdutoModel.Ativo;
+                    }
+
+                    return Json(grupoProduto);
+                }
+                catch (Exception ex)
+                {
+                    throw ex;
+                }
+            }
+            else
+            {
+                return Json(grupoProdutoModel.id);
+            }
+        }
+
+        [HttpPost]
+        [Authorize]
+        public ActionResult ExcluirGrupoProduto(int? id)
+        {
+            if (id != null)
+            {
+                var ret = false;
+                var grupoProduto = _ListaGrupoProduto.Find(x => x.id == id);
+
+                if (grupoProduto != null)
+                {
+                    _ListaGrupoProduto.Remove(grupoProduto);
+                    ret = true;
+                }
+                return Json(ret);
+            }
+            else
+            {
+                return Json("erro: 'ID inválido'");
+            } 
         }
 
         [Authorize]
