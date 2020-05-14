@@ -9,26 +9,19 @@ namespace ControleEstoque.Web.Controllers
 {
     public class CadastroController : Controller
     {
-        private static List<GrupoProdutoModel> _ListaGrupoProduto = new List<GrupoProdutoModel>()
-        {
-            new GrupoProdutoModel(){ id=1, Nome="Canetas", Ativo=true },
-            new GrupoProdutoModel(){ id=2, Nome="Livros", Ativo=true },
-            new GrupoProdutoModel(){ id=3, Nome="Mouses", Ativo=false }       
-        };
-
         [Authorize]
         public ActionResult GrupoProduto()
         {
-            return View(_ListaGrupoProduto);
+            return View(GrupoProdutoModel.findAll());
         }
 
         [HttpPost]
         [Authorize]
-        public ActionResult RecuperarGrupoProduto(int? id)
+        public ActionResult RecuperarGrupoProduto(int id)
         {
-            if (id != null)
+            if (!id.Equals(null))
             {
-                return Json(_ListaGrupoProduto.Find(x => x.id == id));
+                return Json(GrupoProdutoModel.findById(id));
             }
             else
             {
@@ -40,52 +33,40 @@ namespace ControleEstoque.Web.Controllers
         [Authorize]
         public ActionResult SalvarGrupoProduto(GrupoProdutoModel grupoProdutoModel)
         {
-            if (grupoProdutoModel != null)
+            var mensagensAviso = new List<string>();
+            if (ModelState.IsValid)
             {
                 try
                 {
-                    var grupoProduto = _ListaGrupoProduto.Find(x => x.id == grupoProdutoModel.id);
-
-                    if (grupoProduto == null)
-                    {
-                        grupoProduto = grupoProdutoModel;
-                        grupoProduto.id = _ListaGrupoProduto.Max(x => x.id) + 1;
-                        _ListaGrupoProduto.Add(grupoProduto);
+                    var id = grupoProdutoModel.save();
+                    if (!id.Equals(null)){
+                        return Json(new { id });
                     }
                     else
                     {
-                        grupoProduto.Nome = grupoProdutoModel.Nome;
-                        grupoProduto.Ativo = grupoProdutoModel.Ativo;
+                        return Json(new { MensagemErro = "Erro ao recuperar id do item salvo!" });
                     }
 
-                    return Json(grupoProduto);
                 }
                 catch (Exception ex)
                 {
-                    throw ex;
+                    return Json(new { MensagemErro = "Exception gerada!" });
                 }
             }
             else
             {
-                return Json(grupoProdutoModel.id);
+                mensagensAviso = ModelState.Values.SelectMany(x => x.Errors).Select(x => x.ErrorMessage).ToList();
+                return Json(new {grupoProdutoModel.id, MensagensAviso = mensagensAviso});
             }
         }
 
         [HttpPost]
         [Authorize]
-        public ActionResult ExcluirGrupoProduto(int? id)
+        public ActionResult ExcluirGrupoProduto(int id)
         {
-            if (id != null)
+            if (!id.Equals(null))
             {
-                var ret = false;
-                var grupoProduto = _ListaGrupoProduto.Find(x => x.id == id);
-
-                if (grupoProduto != null)
-                {
-                    _ListaGrupoProduto.Remove(grupoProduto);
-                    ret = true;
-                }
-                return Json(ret);
+                return Json(GrupoProdutoModel.remove(id));
             }
             else
             {
