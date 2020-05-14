@@ -9,28 +9,69 @@ namespace ControleEstoque.Web.Controllers
 {
     public class CadastroController : Controller
     {
-        private static List<GrupoProdutoModel> _ListaGrupoProduto = new List<GrupoProdutoModel>()
-        {
-            new GrupoProdutoModel(){ id=1, Nome="Canetas", Ativo=true },
-            new GrupoProdutoModel(){ id=2, Nome="Livros", Ativo=true },
-            new GrupoProdutoModel(){ id=3, Nome="Mouses", Ativo=false }       
-        };
-
         [Authorize]
         public ActionResult GrupoProduto()
         {
-            return View(_ListaGrupoProduto);
+            return View(GrupoProdutoModel.findAll());
         }
 
         [HttpPost]
-        public ActionResult RecuperarGrupoProduto(int? id)
+        [Authorize]
+        public ActionResult RecuperarGrupoProduto(int id)
         {
-            if (id != null)
+            if (!id.Equals(null))
             {
-                return Json(_ListaGrupoProduto.Find(x => x.id == id));
+                return Json(GrupoProdutoModel.findById(id));
             }
+            else
+            {
+                return Json("erro: 'ID inválido'");
+            }
+        }
 
-            return Json("erro: 'ID inválido'");
+        [HttpPost]
+        [Authorize]
+        public ActionResult SalvarGrupoProduto(GrupoProdutoModel grupoProdutoModel)
+        {
+            var mensagensAviso = new List<string>();
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    var id = grupoProdutoModel.save();
+                    if (!id.Equals(null)){
+                        return Json(new { id });
+                    }
+                    else
+                    {
+                        return Json(new { MensagemErro = "Erro ao recuperar id do item salvo!" });
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    return Json(new { MensagemErro = "Exception gerada!" });
+                }
+            }
+            else
+            {
+                mensagensAviso = ModelState.Values.SelectMany(x => x.Errors).Select(x => x.ErrorMessage).ToList();
+                return Json(new {grupoProdutoModel.id, MensagensAviso = mensagensAviso});
+            }
+        }
+
+        [HttpPost]
+        [Authorize]
+        public ActionResult ExcluirGrupoProduto(int id)
+        {
+            if (!id.Equals(null))
+            {
+                return Json(GrupoProdutoModel.remove(id));
+            }
+            else
+            {
+                return Json("erro: 'ID inválido'");
+            } 
         }
 
         [Authorize]

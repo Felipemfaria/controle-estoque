@@ -28,13 +28,13 @@
                     <tbody>
                         @foreach (var grupoProduto in Model)
                         {
-                            <tr data-id="@grupoProduto.id">
+                            <tr id="@grupoProduto.id">
                                 <td id="ID">@grupoProduto.id</td>
                                 <td>@grupoProduto.Nome</td>
                                 <td>@{ var ativo = (grupoProduto.Ativo ? "SIM" : "NÃO");} @ativo</td>
                                 <td>
                                     <a class="btn btn-primary btn-alterar" role="button" onclick="alterarGrupoProduto(@grupoProduto.id)"><i class="glyphicon glyphicon-pencil"></i> Alterar</a>
-                                    <a class="btn btn-danger btn-excluir" role="button" onclick=""><i class="glyphicon glyphicon-trash"></i> Excluir</a>
+                                    <a class="btn btn-danger btn-excluir" role="button" onclick="excluirGrupoProduto(@grupoProduto.id)"><i class="glyphicon glyphicon-trash"></i> Excluir</a>
                                 </td>
                             </tr>
                         }
@@ -44,7 +44,9 @@
         </div>
     </section>
 </div>
+@Html.Hidden("id_cadastro")
 <div id="modal_cadastro" class="form-horizontal invisivel" role="dialog">
+    <div id="primeira_msg_aviso" class="text-danger invisivel"></div>
     <fieldset>
         <div class="row">
             <div class="form-group">
@@ -61,8 +63,10 @@
                 <div class="form-group">
                     <div class="modal-footer">
                         <a id="btn_sair" class="btn btn-default" role="button" data-dismiss="modal"><i class="glyphicon glyphicon-remove"> Sair</i></a>
-                        <a id="btn_confirmar" class="btn btn-primary" role="button"><i class="glyphicon glyphicon-ok"> Salvar</i></a>
+                        <a id="btn_confirmar" class="btn btn-primary" role="button" onclick="salvarGrupoProduto()"><i class="glyphicon glyphicon-ok"> Salvar</i></a>
                     </div>
+                    <div id="msg_aviso" class="alert alert-warning invisivel">Preencha os campos acima.</div> 
+                    <div id="msg_erro" class="alert alert-danger invisivel">Vixi! Deu ruim! =(</div> 
                 </div>
             </div>
         </div>
@@ -72,10 +76,15 @@
 @section Scripts{
     <script>
         function abrirForm(dados) {
+            $('#id_cadastro').val(dados.id);
             $('#tb_nome').val(dados.Nome);
             $('#cb_ativo').prop('checked', dados.Ativo);
 
             var modalCadastro = $('#modal_cadastro');
+
+            $('#msg_erro').hide();
+            $('#primeira_msg_aviso').hide().empty();
+            $('#msg_aviso').hide();  
 
             bootbox.dialog({
                 title: '@ViewBag.Title',
@@ -94,25 +103,110 @@
         });
 
         function alterarGrupoProduto(id) {
-
             var url = '@Url.Action("RecuperarGrupoProduto", "Cadastro")',
             param = { id: id };
 
             $.post(url, param, (response) => {
-                if (response) {
+                if (!response.erro) {
                     abrirForm(response);
+                }
+                else {
+                    alert('Erro ao recuperar dados do grupo de produto');
                 }
             });
         }
 
         function excluirGrupoProduto(id) {
-            var url = '@Url.Action("RecuperarGrupoProduto", "Cadastro")',
-                param = { id: id };
+            var url = '@Url.Action("ExcluirGrupoProduto", "Cadastro")',
+                param = { id: id },
+                tr = $(`#${id}`);
+
+            console.log(tr);
+            bootbox.confirm({
+                message: 'Você tem certeza que deseja excluir esse grupo de produto?',
+                buttons: {
+                    confirm: {
+                        label: 'Sim',
+                        className: 'btn-success'
+                    },
+                    cancel: {
+                        label: 'Não',
+                        className: 'btn-danger'
+                    }
+                },
+                callback: (result) => {
+                    if (result) {
+                        $.post(url, param, (response) => {
+                            if (response) {
+                                tr.remove();
+                            }
+                        })
+                    }
+                }
+
+            })
         }
-        
 
-        $(document).on('click', '.btn_excluir', () => { });
-           
+        function criarLinhaGrid(dados) {
+            var ret =
+                `<tr id="${dados.id}">` +
+                `<td id="ID">${dados.id}</td>` +
+                `<td>${dados.Nome}</td>` +
+                `<td>${dados.Ativo ? 'SIM' : 'NÃO'}</td>` +
+                `<td>` +
+                `<a class="btn btn-primary btn-alterar" role="button" style="margin-right: 3px" onclick="alterarGrupoProduto(${dados.id})"><i class="glyphicon glyphicon-pencil"></i> Alterar</a>` +
+                `<a class="btn btn-danger btn-excluir" role="button" onclick="excluirGrupoProduto(${dados.id})"><i class="glyphicon glyphicon-trash"></i> Excluir</a>` +
+                `</td>` +
+                `</tr>`;
+
+            return ret;
+        }
+
+        function salvarGrupoProduto() {
+            var url = '@Url.Action("SalvarGrupoProduto", "Cadastro")',
+                param = {
+                    id: $('#id_cadastro').val(),
+                    Nome: $('#tb_nome').val(),
+                    Ativo: $('#cb_ativo').prop('checked'),
+                };
+
+            $.post(url, param, (response) => {
+                if (response.id) {
+                    if (param.id == 0) {
+                        param.id = response.id;
+                        var table = $('#grid_cadastro').find('tbody'),
+                            linha = criarLinhaGrid(param);
+
+                        table.append(linha);
+                    }
+                    else {
+                        var linha = $('#grid_cadastro').find('tr[id =' + param.id + ']').find('td');
+                        linha
+                            .eq(1).html(param.Nome).end()
+                            .eq(2).html(param.Ativo ? 'SIM' : 'NÃO');
+                    }
+
+                    $('#modal_cadastro').parents('.bootbox').modal('hide');
+                } else if (response.MensagemErro) {
+                    $('#primeira_msg_aviso').hide();
+                    $('#msg_aviso').hide();
+                    $('#msg_erro').show();
+                } else if (response.MensagensAviso) {
+                    $('#msg_erro').hide();
+                    $('#primeira_msg_aviso').show().html(formatarMensagemAviso(response.MensagensAviso));
+                    $('#msg_aviso').show();                 
+                }
+            });
+        }
+
+        function formatarMensagemAviso(mensagens) {
+            var ret = '';
+
+            for (var i = 0; i < mensagens.length; i++) {
+                ret += '<li>' + mensagens[i] + '</li>';
+            }
+
+            return '<ul>' + ret + '</ul>';
+        }
     </script>
-
 }
