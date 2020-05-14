@@ -46,6 +46,7 @@
 </div>
 @Html.Hidden("id_cadastro")
 <div id="modal_cadastro" class="form-horizontal invisivel" role="dialog">
+    <div id="primeira_msg_aviso" class="text-danger invisivel"></div>
     <fieldset>
         <div class="row">
             <div class="form-group">
@@ -64,6 +65,8 @@
                         <a id="btn_sair" class="btn btn-default" role="button" data-dismiss="modal"><i class="glyphicon glyphicon-remove"> Sair</i></a>
                         <a id="btn_confirmar" class="btn btn-primary" role="button" onclick="salvarGrupoProduto()"><i class="glyphicon glyphicon-ok"> Salvar</i></a>
                     </div>
+                    <div id="msg_aviso" class="alert alert-warning invisivel">Preencha os campos acima.</div> 
+                    <div id="msg_erro" class="alert alert-danger invisivel">Vixi! Deu ruim! =(</div> 
                 </div>
             </div>
         </div>
@@ -78,6 +81,10 @@
             $('#cb_ativo').prop('checked', dados.Ativo);
 
             var modalCadastro = $('#modal_cadastro');
+
+            $('#msg_erro').hide();
+            $('#primeira_msg_aviso').hide().empty();
+            $('#msg_aviso').hide();  
 
             bootbox.dialog({
                 title: '@ViewBag.Title',
@@ -164,10 +171,11 @@
                 };
 
             $.post(url, param, (response) => {
-                if (response) {
+                if (response.id) {
                     if (param.id == 0) {
+                        param.id = response.id;
                         var table = $('#grid_cadastro').find('tbody'),
-                            linha = criarLinhaGrid(response);
+                            linha = criarLinhaGrid(param);
 
                         table.append(linha);
                     }
@@ -177,12 +185,28 @@
                             .eq(1).html(param.Nome).end()
                             .eq(2).html(param.Ativo ? 'SIM' : 'NÃO');
                     }
-                    
+
                     $('#modal_cadastro').parents('.bootbox').modal('hide');
+                } else if (response.MensagemErro) {
+                    $('#primeira_msg_aviso').hide();
+                    $('#msg_aviso').hide();
+                    $('#msg_erro').show();
+                } else if (response.MensagensAviso) {
+                    $('#msg_erro').hide();
+                    $('#primeira_msg_aviso').show().html(formatarMensagemAviso(response.MensagensAviso));
+                    $('#msg_aviso').show();                 
                 }
             });
         }
 
+        function formatarMensagemAviso(mensagens) {
+            var ret = '';
 
+            for (var i = 0; i < mensagens.length; i++) {
+                ret += '<li>' + mensagens[i] + '</li>';
+            }
+
+            return '<ul>' + ret + '</ul>';
+        }
     </script>
 }
